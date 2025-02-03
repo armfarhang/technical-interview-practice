@@ -37,69 +37,15 @@ class Graph:
     def display_graph(self):
         node = self.root_node
         edge = node.next_edge
-        print("Displaying the graph:")
+        output_print = "Displaying the graph:\n"
         while edge != None:
-            print("node:", node.data)
-            print("     Edges:", edge.modifier)
+            output_print += f"node: {node.data}\n"
+            output_print += f"     Edges: {edge.modifier}\n"
             node = edge.dest
             edge = node.next_edge
-        print("Final node:", node.data)
+        output_print += f"Final node: {node.data}\n"
+        return output_print
 
-    # def topdown_fill_nodes(self):
-    #     def topdown_modify(input_list, modifier):
-    #         '''
-    #         modifies the input list of shapes based on the modifier tuple
-    #         :param input_list:
-    #         :param modifier:
-    #         :return:
-    #         '''
-    #         output_list = []
-    #         for i in modifier:
-    #             output_list.append(input_list[i - 1])
-    #         return output_list
-    #     def bottomup_modify(output, modifier):
-    #         '''
-    #         based on the output and the modifer preceding it, it will calculate the input coming into the modifer.
-    #         In a sese it is the reverse of topdown_modify aka a bottom up approach
-    #         :param output:
-    #         :param modifier:
-    #         :return:
-    #         '''
-    #         input_list = [None] * len(output)
-    #         for i, val in enumerate(modifier):
-    #             input_list[val - 1] = output_list[i]
-    #         return input_list
-    #
-    #     node = self.root_node
-    #     edge = node.next_edge
-    #     while edge != None:
-    #         next_node = edge.dest
-    #         input_shapes = node.data
-    #         modifier = edge.modifier
-    #         if node.data != None: #could calculate next node data
-    #             if next_node.data == None and (isinstance(modifier, tuple)):
-    #                 #if next node is empty and modifier is a tuple fill the data for the next node
-    #                 output_shapes = []
-    #                 for i in modifier:
-    #                     output_shapes.append(input_shapes[i - 1])
-    #                 next_node.data = output_shapes
-    #             if next_node.data != None and (isinstance(modifier, list)):
-    #                 #if current node and next node are not empty and modifier is a list,
-    #                 # search through the modifier list to find the modifier that will transform the current node data to the next node data
-    #                 for i in modifier:
-    #                     output = topdown_modify(node.data, i)
-    #                     if output==next_node.data:
-    #                         edge.modifier = i
-    #                         break
-    #         else:
-    #             print("Node does not have data and cannot be modified to calculate the next node")
-    #
-    #
-    #         node = next_node
-    #         edge = node.next_edge
-    #
-    #
-    #     print("Top Down Node Filling Complete")
 
     def topdown_fill_nodes(self):
         def in_out_find_mod(src_data, dest_data): #given the inpt and output shapes/strings find the modifier betwee them
@@ -110,10 +56,10 @@ class Graph:
         def in_mod_find_out(src_data, modifier): #given the input shapes and the modifier find the output shapes
             output_list = []
             for i in modifier:
-                output_list.append(input_list[i - 1])
+                output_list.append(src_data[i - 1])
             return output_list
         def out_mod_find_in(output_list, modifier): #given the output shapes and the modifier find the input shapes
-            input_list = [None] * len(output)
+            input_list = [None] * len(modifier)
             for i, val in enumerate(modifier):
                 input_list[val - 1] = output_list[i]
             return input_list
@@ -130,28 +76,31 @@ class Graph:
                 #if input shape data exist and modifer is a tuple --->  calculate the next node data
                 if input_shapes != None: #if we have input
                     if next_node.data != None:
-                        if modifier != None:
-                            if isinstance(modifier, list): #if we have modifier options
-                                if next_node.data != None: #find the right modifier and set it
-                                    for i in modifier:
-                                        output = in_mod_find_out(input_shapes, i)
-                                        if output==next_node.data:
-                                            current_node.next_edge.modifier = i
-                                            current_node = next_node
-
-                            else:
-                                current_node.next_edge.modifier = in_out_find_mod(input_shapes, next_node.data)
-                                current_node = next_node
-                        else:
-                            current_node.next_edge.modifier = in_out_find_mod(input_shapes, next_node.data)
-                            current_node = next_node
+                        current_node.next_edge.modifier = in_out_find_mod(input_shapes, next_node.data)
+                        current_node = next_node
+                        # if modifier != None:
+                        #     if isinstance(modifier, list): #if we have modifier options
+                        #         for i in modifier:
+                        #             modifier = in_out_find_mod(input_shapes, next_node.data)
+                        #             if i==modifier:
+                        #                 current_node.next_edge.modifier = i
+                        #                 current_node = next_node
+                        #                 break
+                            # else:
+                            #     current_node.next_edge.modifier = in_out_find_mod(input_shapes, next_node.data)
+                            #     current_node = next_node
+                        # else:
+                        #     current_node.next_edge.modifier = in_out_find_mod(input_shapes, next_node.data)
+                        #     current_node = next_node
 
                     else:
-                        if isinstance(modifier, tuple):  # if we have a 1 modifier
+                        if isinstance(modifier, tuple):  # if we have 1 modifier
                             output_shapes = in_mod_find_out(input_shapes, modifier)
                             next_node.data = output_shapes
                         else:
                             remain_nodes.append(next_node)
+                            current_node = next_node
+
                 else:
                     if next_node.data !=None:
                         if isinstance(modifier, tuple):
@@ -161,22 +110,24 @@ class Graph:
 
                         else:
                             remain_nodes.append(current_node)
+                            current_node = next_node
 
                     else:
                         remain_nodes.append(current_node)
                         remain_nodes.append(next_node)
+                        current_node = next_node
             return remain_nodes
 
         remain_nodes = one_pass(self.root_node)
-        # while remain_nodes != []:
-        #     for node in remain_nodes:
-        #         one_pass(node)
+        while remain_nodes != []:
+            node = remain_nodes.pop()
+            for i in one_pass(node):
+                remain_nodes.append(i)
+
+
 
 
         print("Top Down Node Filling Complete")
-
-
-
 
 
 def generate_arrays(length):
@@ -212,59 +163,18 @@ def prompt_master(input_list, output_list):
             for i in value:
                 input_list = topdown_transform_list_by_modifier(input_list, i)
 
-# if __name__ == '__main__':
-#     input_list = ["cross", "square", "triangle", "circle"]
-#     output_list = ["triangle", "cross", "circle", "square"]
-#     permut_list = generate_arrays(len(input_list))
-#     stage_dict = {"stage1": permut_list, "stage2": permut_list}
-#
-#     # prompt_master(input_list, output_list)
-#     output = topdown_transform_list_by_modifier(input_list, [2, 1, 4, 3])
-#     input = buttomup_transform_list_by_modifier(output, [2, 1, 4, 3])
-#     print(f"topdown output: {output}")
-#     print(f"buttom up input: {input}")
 
-# if __name__ == "__main__":
-#     node1 = Node(["cross", "square", "triangle", "circle"], None, None)
-#     node2 = Node(["triangle", "cross", "circle", "square"], None, None)
-#     node3 = Node(None, None, None)
-#     final_node = Node(["triangle", "cross", "circle", "square"], None, None)
-#
-#     edge1 = Edge(node1, node2, None)
-#     edge2 = Edge(node2, node3, [(2,3,4,1), (2,3,1,4)])
-#     edge3 = Edge(node3, final_node, (1,2,4,3))
-#
-#     connect_nodes(node1, edge1, node2)
-#     connect_nodes(node2, edge2, node3)
-#     connect_nodes(node3, edge3, final_node)
-#
-#
-#
-#     # node1.next_edge = edge1
-#     # node2.prev_edge = edge1
-#     # node2.next_edge = edge2
-#     # node3.prev_edge = edge2
-#     # node3.next_edge = edge3
-#     # final_node.prev_edge = edge2
-#
-#
-#     graph = Graph(node1)
-#     # graph.display_graph()
-#     # graph.topdown_fill_nodes()
-#     # graph.display_graph()
-#
-#     graph.topdown_fill_nodes()
-
-# Test Case 1: Simple pipeline with two nodes and one edge
 if __name__ == "__main__":
-    node1 = Node(["cross", "square", "triangle", "circle"], None, None)
-    edge1 = Edge(None, None, None)
-    node2 = Node(["triangle", "circle", "cross", "square"], None, None)
-    edge2 = Edge(None, None, None)
-    node3 = Node(["circle", "cross", "square", "triangle"], None, None)
-    edge3 = Edge(None, None, None)
-    final_node = Node(["triangle", "cross", "circle", "square"], None, None)
+    node1 = Node(None, None, None)
 
+    edge1 = Edge(None, None, (2, 3, 4, 1))
+    node2 = Node(['triangle', 'circle', 'cross', 'square'], None, None)
+
+    edge2 = Edge(None, None, [(3, 4, 1, 2), (4, 2, 1, 3)])
+    node3 = Node(['circle', 'cross', 'square', 'triangle'], None, None)
+
+    edge3 = Edge(None, None, (4, 2, 1, 3))
+    final_node = Node(['triangle', 'cross', 'circle', 'square'], None, None)
 
     connect_nodes(node1, edge1, node2)
     connect_nodes(node2, edge2, node3)
@@ -273,4 +183,8 @@ if __name__ == "__main__":
     graph = Graph(node1)
     graph.topdown_fill_nodes()
 
-    graph.display_graph()
+    display_graph = graph.display_graph()
+
+
+    print(display_graph)
+
